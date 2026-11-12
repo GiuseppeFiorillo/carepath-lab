@@ -1,0 +1,32 @@
+# Local mentoring
+/docs/PROGRESS.md
+/docs/learning/
+
+# Secrets
+.env
+.env.*
+!.env.example
+*.key
+
+# Data and trained artifacts
+data/raw/
+data/processed/
+models/
+artifacts/
+mlruns/
+*.pkl
+*.joblib
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
