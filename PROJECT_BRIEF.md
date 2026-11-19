@@ -1,8 +1,8 @@
 # CarePath Lab — Project Brief
 
-**Versione:** 1.4 — 12 novembre 2026
+**Versione:** 1.5 — 13 novembre 2026
 **Responsabile:** sviluppatore autodidatta (portfolio personale)  
-**Stato:** Fasi 0–2 completate; Fase 3 da iniziare
+**Stato:** Fasi 0–2 completate; Fase 3 avviata: Explainable AI e fairness
 
 ## 1. Perché esiste questo progetto
 
@@ -55,7 +55,7 @@ Il simulatore di capacità confronta, **retrospettivamente**, ranking e selezion
 ### MVP C — Explainability e audit
 - SHAP/global feature importance con limiti interpretativi.
 - Performance e calibrazione per sottogruppi pertinenti, con dimensione dei campioni e incertezza.
-- Model card che documenti use case, limitazioni, assunzioni e rischi.
+- Model Audit Report nella Fase 3: spiegazioni, prestazioni/fairness per sottogruppi, sensibilità alle soglie e limiti. Model card come sintesi successiva di use case, assunzioni e rischi.
 
 ### MVP D — Simulatore di capacità
 - Ordinamento sul rischio stimato; confronti precision@k, recall@k e baseline random.
@@ -111,6 +111,7 @@ confronti per paziente, imputazione e valutazione conclusiva sulla validation di
 sviluppo sono documentati e testati. Il report corrente è `docs/PHASE_2_REPORT.md`;
 `docs/BASELINE_REPORT.md` conserva gli esperimenti precedenti. Il test finale non
 è stato valutato. README e ROADMAP descrivono comandi e passi successivi;
-la Fase 3 riguarda spiegazione del modello e tracciamento degli esperimenti.
+la Fase 3 riguarda explainability e fairness con un Model Audit Report. Il
+tracciamento con MLflow è facoltativo, non un prerequisito per l'audit.
 Gli esercizi iniziali restano in `examples/phase_1/`. Prompt di tutoraggio,
 cronologie e riepilogo locale dei progressi sono esclusi da Git.

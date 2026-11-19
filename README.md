@@ -19,8 +19,10 @@ The final test set has not been scored. The selected training-fitted CatBoost
 pipeline, probabilities and execution metadata are saved locally under ignored
 artifacts/. Aggregate validation metrics, paired bootstrap intervals and PR/
 calibration figures are exported in the report. The validation has already been
-inspected and is not an untouched confirmatory sample. Next: Phase 3 model
-explanation and experiment tracking; the final test remains reserved.
+inspected and is not an untouched confirmatory sample. Phase 3 is in progress:
+subgroup metrics, calibration and a first patient-cluster comparison are implemented;
+SHAP and the full Model Audit Report remain pending. See the
+[Model Audit Plan](docs/MODEL_AUDIT_PLAN.md). The final test remains reserved.
 See the [phase checklist](ROADMAP.md) for completion criteria.
 
 | Dataset / analysis population | Encounters | Patients / outcomes |
@@ -157,6 +159,36 @@ The profiler regenerates the aggregate
 import verification must report 101,766 database records and zero missing,
 unexpected or mismatched records. This establishes import fidelity, not source
 quality, complete follow-up or clinical usefulness.
+
+## Phase 3: audit saved validation predictions
+
+After the Phase 2 artifacts and saved splits are available locally, run:
+
+```bash
+.venv/bin/python -m scripts.audit_model --output-dir artifacts/phase3_audit_run
+```
+
+Choose a new output directory for each execution; existing directories are
+refused before data loading. This command reuses the saved specialty-mode
+CatBoost probabilities without fitting models or scoring the reserved test.
+It exports subgroup support/confusion metrics at thresholds 0.10/0.20/0.30/0.50,
+fixed-bin calibration for recorded gender/age/race, and a 1,000-replicate
+patient-cluster percentile interval for recall Female minus Male at 0.20.
+Undefined metrics remain missing. If any bootstrap difference is not finite,
+the interval and its summary CSV are omitted, while metadata records that fact.
+
+Outputs are `subgroup_metrics.csv`, `subgroup_calibration.csv`, optional
+`bootstrap_recall_summary.csv`, and `metadata.json` with settings, versions and
+input/code/output hashes. They remain under ignored `artifacts/`. The saved
+Phase 2 metadata records the original fitted-model environment; audit metadata
+records this analysis environment. Matching seeds require the same patient
+order for identical finite bootstrap draws.
+
+These are exploratory results on repeatedly inspected development validation,
+conditional on the fitted model. Small groups and repeated patients limit
+interpretation; the interval neither establishes equivalence nor simultaneous
+coverage of all comparisons. SHAP and a full fairness assessment are not yet
+included. See the [Model Audit Plan](docs/MODEL_AUDIT_PLAN.md).
 
 ## Tests and learning examples
 

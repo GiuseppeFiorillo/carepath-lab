@@ -47,15 +47,35 @@ resta riservato fino alle scelte fissate.
 **Done:** checklist completata, comandi riproducibili e confronto scientificamente
 motivato; nessuna superiorità presunta in base alla complessità del modello.
 
-## Fase 3 — Esperimenti avanzati e XAI (settimana 4)
-**Studiare:** confronto tra modelli, tuning non sul test, intervalli di confidenza, SHAP e correlazione vs causalità.  
-**Fare:** approfondire tuning e confronti dopo quelli di base della Fase 2, tracciare esperimenti con MLflow, spiegare predizioni aggregate.  
-**Done:** tabella di confronto onesta e riproducibile; audit interpretabilità.
+## Fase 3 — Explainable AI e fairness (settimana 4)
+**Stato: avviata il 2026-11-13.** Modello fissato dalla Fase 2; niente nuova ricerca di iperparametri.
 
-## Fase 4 — Fairness e decision analysis (settimana 5)
-**Studiare:** subgroup validity, bias, calibration-by-group, precision@k, recall@k, capacity planning.  
-**Fare:** report per sottogruppi con campioni e incertezza; ranking e simulatore k.  
-**Done:** report sui limiti; nessuna pretesa clinica/casuale/causale.
+**Studiare:** SHAP locale/globale, scala dell'output e riferimento, feature correlate e causalità; numerosità e dipendenza per paziente; recall, precision, FPR e calibrazione per sottogruppo; effetto delle soglie e limiti delle definizioni di fairness.
+
+**Fare:** audit del CatBoost selezionato sulla validation di sviluppo, con spiegazioni e confronti per età/genere/race registrati, supporti e incertezza. Test finale riservato. MLflow è facoltativo e non un prerequisito di questa fase.
+
+**Deliverable:** Model Audit Report riproducibile con prestazioni, spiegazioni, limitazioni e analisi della fairness, automatizzato progressivamente.
+
+- [x] Tabella di audit con predizioni/esiti/gruppi uniti per encounter_id e coerenza paziente/esito verificata.
+- [ ] Supporti per sottogruppo: ricoveri, pazienti, positivi, negativi e prevalenza; categorie ignote esplicite.
+- [ ] Spiegazioni SHAP con preprocessing corretto, scala/riferimento dichiarati e limiti sulle feature correlate.
+- [ ] Recall, precision, FPR e calibrazione per gruppi con denominatori e incertezza; metriche indefinite non forzate a zero.
+- [x] Sensibilità a soglie comuni esplorative, senza scegliere una soglia clinica o dichiarare equità da un singolo indice.
+- [ ] Report, grafici, comando riproducibile e test; nessun claim causale/clinico.
+
+Protocollo iniziale: `docs/MODEL_AUDIT_PLAN.md`.
+
+Primo checkpoint implementato: tabelle descrittive per genere/età/race e
+calibrazione, più un intervallo bootstrap per il solo recall Female-minus-Male
+a soglia .20. Comando: `python -m scripts.audit_model --output-dir artifacts/NUOVA_CARTELLA`.
+L'incertezza per gli altri confronti, SHAP e il report integrato restano da completare.
+
+## Fase 4 — Decision analysis e simulatore di capacità (settimana 5)
+**Studiare:** precision@k, recall@k, capacity planning e confronto casuale; utilizzare i limiti dell'audit della Fase 3.
+
+**Fare:** ranking e simulatore k retrospettivo, con supporti e incertezza.
+
+**Done:** report sui limiti; nessuna stima di benefici clinici/costi evitati o pretesa causale.
 
 ## Fase 5 — Servizio e test (settimane 6–7)
 **Studiare:** API REST, schema validation, pytest, logging, error handling, Docker, CI.  
