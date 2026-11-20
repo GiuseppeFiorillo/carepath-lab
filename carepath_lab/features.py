@@ -1,8 +1,5 @@
 """Declare named feature sets and construct typed model inputs."""
 
-from multiprocessing import Value
-
-from narwhals._compliant import column
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -80,6 +77,13 @@ FEATURE_SETS = {
     },
 }
 
+# Keep the Phase 2 schema intact so historical results retain their meaning.
+REVIEWED_EXCLUDED_FEATURES = ("payer_code", "acetohexamide", "examide", "citoglipton")
+FEATURE_SETS["reviewed"] = {
+    kind: [name for name in names if name not in REVIEWED_EXCLUDED_FEATURES]
+    for kind, names in FEATURE_SETS["extended"].items()
+}
+
 
 def build_model_inputs(
     data: pd.DataFrame,
@@ -149,7 +153,7 @@ def build_preprocessor(
         if column not in imputed_categorical_features
     ]
 
-    use_sparse = feature_set == "extended"
+    use_sparse = feature_set in {"extended", "reviewed"}
 
     numeric_transformer = StandardScaler() if scale_numeric else "passthrough"
 

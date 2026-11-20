@@ -21,7 +21,7 @@ class AuditModelCommandTest(unittest.TestCase):
                 load.assert_not_called()
             self.assertEqual(list(Path(directory).iterdir()), [])
 
-    def run_synthetic_audit(self, destination, differences):
+    def run_synthetic_audit(self, destination, differences, source_artifacts=None):
         validation = pd.DataFrame({
             "encounter_id": ["E1", "E2", "E3", "E4"],
             "patient_nbr": ["P1", "P1", "P2", "P2"],
@@ -41,9 +41,23 @@ class AuditModelCommandTest(unittest.TestCase):
         ) as bootstrap, patch(
             "scripts.audit_model.file_sha256", return_value="synthetic-hash"
         ), patch("builtins.print"):
-            main(destination)
+            if source_artifacts is None:
+                main(destination)
+            else:
+                main(destination, source_artifacts=source_artifacts)
         self.assertEqual(read.call_args.kwargs["dtype"], {"encounter_id": str, "patient_nbr": str})
         self.assertEqual(bootstrap.call_args.kwargs, {"n_bootstrap": 1000, "random_state": 123})
+        return read.call_args.args[0]
+
+    def test_explicit_prediction_source_is_used_and_recorded(self):
+        with TemporaryDirectory() as directory:
+            destination = Path(directory) / "audit"
+            source = Path("artifacts/reviewed_model")
+            read_path = self.run_synthetic_audit(destination, [-0.02, 0.01], source_artifacts=source)
+            self.assertEqual(read_path, source / "validation_predictions.csv")
+            metadata = json.loads((destination / "metadata.json").read_text())
+            self.assertEqual(metadata["source_artifacts"], str(source))
+            self.assertIn(str(source / "metadata.json"), metadata["input_sha256"])
 
     def test_valid_differences_export_summary_and_serializable_provenance(self):
         with TemporaryDirectory() as directory:

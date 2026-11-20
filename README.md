@@ -23,6 +23,10 @@ inspected and is not an untouched confirmatory sample. Phase 3 is in progress:
 subgroup metrics, calibration and a first patient-cluster comparison are implemented;
 SHAP and the full Model Audit Report remain pending. See the
 [Model Audit Plan](docs/MODEL_AUDIT_PLAN.md). The final test remains reserved.
+An explicitly authorized [predictor review](docs/FEATURE_REVIEW.md) now defines
+the current `reviewed` model with 41 predictors: payer and three training-constant
+drug fields are excluded. The 45-field `extended` configuration and Phase 2
+artifacts remain historical references, not overwritten results.
 See the [phase checklist](ROADMAP.md) for completion criteria.
 
 | Dataset / analysis population | Encounters | Patients / outcomes |
@@ -162,7 +166,25 @@ quality, complete follow-up or clinical usefulness.
 
 ## Phase 3: audit saved validation predictions
 
-After the Phase 2 artifacts and saved splits are available locally, run:
+For the current reviewed model, after saved splits are available locally:
+
+```bash
+.venv/bin/python -m scripts.review_features --output-dir artifacts/feature_review_repeat
+.venv/bin/python -m scripts.refresh_selected_model --output-dir artifacts/reviewed_model_repeat
+.venv/bin/python -m scripts.audit_model --source-artifacts artifacts/reviewed_model_repeat --output-dir artifacts/reviewed_audit_repeat
+```
+
+The first command optionally repeats the eight-profile training-only sensitivity
+study (40 fits); it does not automatically select or delete predictors and is
+not a prerequisite to refresh the frozen model. The refresh command uses the
+documented `reviewed` schema and versioned decision/fold evidence under
+`docs/reports/feature_review_selection.json` and `feature_review_folds.csv`.
+Current verified artifacts are `artifacts/feature_review_selected_final_2026-11-20/`
+and `artifacts/feature_review_audit_final_2026-11-20/`. No final-test scoring is performed.
+Use `feature_set="reviewed"` when constructing inputs for the new pipeline and
+SHAP; the earlier 45-field SHAP exercises explain the historical model only.
+
+For the original Phase 2 model, the unchanged default source remains available:
 
 ```bash
 .venv/bin/python -m scripts.audit_model --output-dir artifacts/phase3_audit_run

@@ -20,7 +20,10 @@ from scripts.train_baseline import load_verified_partitions
 from scripts.tune_lightgbm import file_sha256
 
 
-def main(output_dir: Path) -> None:
+def main(
+    output_dir: Path,
+    source_artifacts: Path = Path("artifacts/phase2_fixed_validation_2026-11-12"),
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=False)
     started_at = datetime.now(timezone.utc).isoformat()
 
@@ -28,8 +31,8 @@ def main(output_dir: Path) -> None:
         Path("data/raw/diabetic_data.csv"),
         Path("data/processed/split_assignments.csv"),
         Path("data/processed/split_metadata.json"),
-        Path("artifacts/phase2_fixed_validation_2026-11-12/validation_predictions.csv"),
-        Path("artifacts/phase2_fixed_validation_2026-11-12/metadata.json"),
+        source_artifacts / "validation_predictions.csv",
+        source_artifacts / "metadata.json",
         Path("scripts/train_baseline.py"),
         Path("scripts/audit_model.py"),
         *sorted(Path("carepath_lab").glob("*.py")),
@@ -39,8 +42,7 @@ def main(output_dir: Path) -> None:
     _, validation = load_verified_partitions()
 
     scores = pd.read_csv(
-        Path("artifacts/phase2_fixed_validation_2026-11-12")
-        / "validation_predictions.csv",
+        source_artifacts / "validation_predictions.csv",
         dtype={"encounter_id": str, "patient_nbr": str},
     )
 
@@ -110,7 +112,7 @@ def main(output_dir: Path) -> None:
         "started_at_utc": started_at,
         "evaluation_partition": "validation",
         "model": "catboost_specialty_mode",
-        "source_artifacts": "artifacts/phase2_fixed_validation_2026-11-12",
+        "source_artifacts": str(source_artifacts),
         "group_columns": ["gender", "age", "race"],
         "thresholds": [0.10, 0.20, 0.30, 0.50],
         "calibration_bin_edges": [0, 0.10, 0.20, 0.30, 0.40, 0.50, 1],
@@ -157,4 +159,9 @@ def main(output_dir: Path) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, required=True)
-    main(parser.parse_args().output_dir)
+    parser.add_argument(
+        "--source-artifacts", type=Path,
+        default=Path("artifacts/phase2_fixed_validation_2026-11-12"),
+    )
+    args = parser.parse_args()
+    main(args.output_dir, source_artifacts=args.source_artifacts)

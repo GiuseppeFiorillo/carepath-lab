@@ -5,6 +5,10 @@ not a clinical validation or a final-test performance claim. The final test has
 not been predicted or scored. Earlier exploratory results remain in
 [BASELINE_REPORT.md](BASELINE_REPORT.md).
 
+Historical note (2026-11-20): the later [predictor review](FEATURE_REVIEW.md)
+introduces a 41-feature current model. All results in this report retain their
+original 45-feature meaning and are not overwritten by that revision.
+
 ## Question and protocol
 
 Predict recorded readmission category `<30` versus `>30`/`NO` at a nominal

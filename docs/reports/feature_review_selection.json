@@ -1,0 +1,66 @@
+{
+  "selected_profile": "no_payer",
+  "features": {
+    "numeric": [
+      "time_in_hospital",
+      "num_medications",
+      "number_emergency",
+      "number_inpatient",
+      "num_lab_procedures",
+      "num_procedures",
+      "number_outpatient",
+      "number_diagnoses"
+    ],
+    "categorical": [
+      "age",
+      "admission_type_id",
+      "admission_source_id",
+      "max_glu_serum",
+      "A1Cresult",
+      "metformin",
+      "repaglinide",
+      "nateglinide",
+      "chlorpropamide",
+      "glimepiride",
+      "glipizide",
+      "glyburide",
+      "tolbutamide",
+      "pioglitazone",
+      "rosiglitazone",
+      "acarbose",
+      "miglitol",
+      "troglitazone",
+      "tolazamide",
+      "insulin",
+      "glyburide-metformin",
+      "glipizide-metformin",
+      "glimepiride-pioglitazone",
+      "metformin-rosiglitazone",
+      "metformin-pioglitazone",
+      "change",
+      "diabetesMed",
+      "race",
+      "gender",
+      "medical_specialty",
+      "diag_1",
+      "diag_2",
+      "diag_3"
+    ]
+  },
+  "excluded_from_extended": [
+    "payer_code",
+    "acetohexamide",
+    "examide",
+    "citoglipton"
+  ],
+  "reason": "Remove training-constant fields and payer administrative/missingness dependence; retain clinically interpretable nonconstant fields and demographic audit context. Additional removals are not mandated by meeting exploratory score tolerances.",
+  "selection_data": "saved training patient-grouped CV only",
+  "paired_mean_differences_vs_no_constants": {
+    "ap": 0.000579381217312247,
+    "auroc": -0.0009657978405573254,
+    "brier": 9.924342870865077e-06
+  },
+  "review_metadata_sha256": "b7aec98653af17e5d5069a7cf3bc6162a5f60b14869b77f0bf51c3b1ab850c72",
+  "fold_results_sha256": "128e4b8b25bad05040e967dbcacf6eb129a98d9c744117ddd6618b3b31d43a6f",
+  "final_test_scored": false
+}

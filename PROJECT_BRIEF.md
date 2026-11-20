@@ -113,5 +113,8 @@ sviluppo sono documentati e testati. Il report corrente è `docs/PHASE_2_REPORT.
 è stato valutato. README e ROADMAP descrivono comandi e passi successivi;
 la Fase 3 riguarda explainability e fairness con un Model Audit Report. Il
 tracciamento con MLflow è facoltativo, non un prerequisito per l'audit.
+La revisione autorizzata del 20 novembre 2026 introduce un modello corrente
+con 41 predittori (`reviewed`), conservando i risultati storici a 45 feature:
+motivazioni e confronti sono in `docs/FEATURE_REVIEW.md`.
 Gli esercizi iniziali restano in `examples/phase_1/`. Prompt di tutoraggio,
 cronologie e riepilogo locale dei progressi sono esclusi da Git.

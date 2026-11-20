@@ -65,6 +65,16 @@ class BuildModelInputsTest(unittest.TestCase):
         self.assertEqual(X.loc[30, "admission_type_id"], "2")
         self.assertFalse({"encounter_id", "patient_nbr", "readmitted"} & set(X.columns))
 
+    def test_reviewed_inputs_remove_payer_and_training_constants_without_changing_history(self):
+        original, original_y = build_model_inputs(self.data, feature_set="extended")
+        reviewed, reviewed_y = build_model_inputs(self.data, feature_set="reviewed")
+        self.assertEqual(original.shape, (3, 45))
+        self.assertEqual(reviewed.shape, (3, 41))
+        removed = {"payer_code", "acetohexamide", "examide", "citoglipton"}
+        pd.testing.assert_frame_equal(reviewed, original.drop(columns=list(removed)))
+        pd.testing.assert_series_equal(reviewed_y, original_y)
+        self.assertTrue({"medical_specialty", "A1Cresult", "diag_3", "race", "gender"} <= set(reviewed.columns))
+
     def test_does_not_mutate_input_and_returns_independent_predictors(self):
         before = self.data.copy(deep=True)
         X, y = build_model_inputs(self.data)

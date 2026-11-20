@@ -5,9 +5,13 @@ fairness phase. This is a protocol/learning plan, not computed audit findings.
 
 ## Fixed model and evaluation boundary
 
-Use the training-fitted specialty-mode CatBoost pipeline and saved predictions
-from artifacts/phase2_fixed_validation_2026-11-12. No new training/tuning is
-required. Audit the 19,883 development-validation encounters, not the final test.
+Originally use the training-fitted specialty-mode CatBoost pipeline and saved
+predictions from artifacts/phase2_fixed_validation_2026-11-12. On 2026-11-20,
+the learner explicitly authorized a [bounded predictor review](FEATURE_REVIEW.md).
+The current 41-feature revision is saved in
+artifacts/feature_review_selected_final_2026-11-20; earlier audit results remain
+historical and must not be attributed to it. Audit the 19,883
+development-validation encounters, not the final test.
 This validation is already inspected development data, not external confirmation.
 Source/grouping/feature-availability limitations remain in PHASE_2_REPORT.
 

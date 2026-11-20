@@ -48,7 +48,10 @@ resta riservato fino alle scelte fissate.
 motivato; nessuna superiorità presunta in base alla complessità del modello.
 
 ## Fase 3 — Explainable AI e fairness (settimana 4)
-**Stato: avviata il 2026-11-13.** Modello fissato dalla Fase 2; niente nuova ricerca di iperparametri.
+**Stato: avviata il 2026-11-13.** Nessuna nuova ricerca di iperparametri.
+Il 2026-11-20 l'utente ha autorizzato una revisione circoscritta delle feature:
+il modello corrente `reviewed` usa 41 predittori; la versione storica a 45
+rimane disponibile. Evidenze e limiti in `docs/FEATURE_REVIEW.md`.
 
 **Studiare:** SHAP locale/globale, scala dell'output e riferimento, feature correlate e causalità; numerosità e dipendenza per paziente; recall, precision, FPR e calibrazione per sottogruppo; effetto delle soglie e limiti delle definizioni di fairness.
 

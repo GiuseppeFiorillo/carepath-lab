@@ -104,6 +104,14 @@ training-only counts and rationale. The initial six-feature reference is unchang
 
 ### Availability inventory
 
+Current-model update (2026-11-20): `FEATURE_SETS["reviewed"]` excludes
+`payer_code`, `acetohexamide`, `examide` and `citoglipton` from the 45-field
+historical `extended` schema, leaving 41 predictors. The three drug fields
+are constant in saved training; payer removal follows a bounded training-CV
+review, not missingness alone. All original columns remain in source data;
+the inventory below records source semantics and earlier candidate roles.
+See [FEATURE_REVIEW.md](FEATURE_REVIEW.md) for evidence and retained fields.
+
 Current primary-model choice (D-041): plan to include diag_1/diag_2/diag_3
 under an explicit, unverified discharge-time availability assumption for this
 retrospective study. Their final recorded codes may have been finalized later;

@@ -40,13 +40,16 @@ class ModelingFixture(unittest.TestCase):
 
 
 class CatBoostModelTest(ModelingFixture):
+    def test_reviewed_native_imputation_uses_only_reviewed_predictors(self):
+        self.check_native_imputation(False, feature_set="reviewed")
+
     def test_optional_imputation_reaches_native_classifier_without_scaling(self):
         for add_indicators in [False, True]:
             with self.subTest(add_missing_indicators=add_indicators):
                 self.check_native_imputation(add_indicators)
 
-    def check_native_imputation(self, add_indicators):
-        config = FEATURE_SETS["extended"]
+    def check_native_imputation(self, add_indicators, feature_set="extended"):
+        config = FEATURE_SETS[feature_set]
         train = pd.DataFrame({
             **{name: [1, 2, 3, 4] for name in config["numeric"]},
             **{name: ["None", "recorded"] * 2 for name in config["categorical"]},
@@ -58,7 +61,7 @@ class CatBoostModelTest(ModelingFixture):
         original_train = train.copy(deep=True)
         original_validation = validation.copy(deep=True)
         model = build_catboost_model(
-            feature_set="extended", n_jobs=1,
+            feature_set=feature_set, n_jobs=1,
             imputed_categorical_features=("medical_specialty",),
             add_missing_indicators=add_indicators,
         )
@@ -79,7 +82,8 @@ class CatBoostModelTest(ModelingFixture):
                 classifier.get_cat_feature_indices(),
             )
         self.assertEqual(set(classifier.feature_names_), expected_names)
-        self.assertEqual(len(classifier.feature_names_), 46 if add_indicators else 45)
+        expected_count = 41 if feature_set == "reviewed" else 45
+        self.assertEqual(len(classifier.feature_names_), expected_count + int(add_indicators))
         self.assertEqual(fit_inputs["medical_specialty"].tolist(), [
             "InternalMedicine", "InternalMedicine", "InternalMedicine", "Cardiology",
         ])
