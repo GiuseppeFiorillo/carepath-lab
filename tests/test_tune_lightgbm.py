@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-from scripts import tune_lightgbm
+from experiments import tune_lightgbm
 from carepath_lab.features import FEATURE_SETS
 
 
@@ -20,13 +20,12 @@ class LightGBMSearchTest(unittest.TestCase):
     def test_main_rejects_existing_output_before_loading_or_searching(self):
         with TemporaryDirectory() as temporary_dir:
             with (
-                patch("scripts.tune_lightgbm.Path", return_value=Path(temporary_dir)),
-                patch("scripts.tune_lightgbm.load_verified_partitions") as load,
-                patch("scripts.tune_lightgbm.run_search") as search,
+                patch("experiments.tune_lightgbm.load_verified_partitions") as load,
+                patch("experiments.tune_lightgbm.run_search") as search,
                 redirect_stdout(StringIO()),
             ):
                 with self.assertRaises(FileExistsError):
-                    tune_lightgbm.main()
+                    tune_lightgbm.main(Path(temporary_dir))
             load.assert_not_called()
             search.assert_not_called()
 
@@ -50,13 +49,12 @@ class LightGBMSearchTest(unittest.TestCase):
                 return {"synthetic_test_metadata": True}
 
             with (
-                patch("scripts.tune_lightgbm.Path", return_value=output_dir),
-                patch("scripts.tune_lightgbm.load_verified_partitions", return_value=(train, validation)),
-                patch("scripts.tune_lightgbm.run_search", return_value=scores) as search,
-                patch("scripts.tune_lightgbm.build_metadata", side_effect=check_metadata_inputs),
+                patch("experiments.tune_lightgbm.load_verified_partitions", return_value=(train, validation)),
+                patch("experiments.tune_lightgbm.run_search", return_value=scores) as search,
+                patch("experiments.tune_lightgbm.build_metadata", side_effect=check_metadata_inputs),
                 redirect_stdout(StringIO()),
             ):
-                tune_lightgbm.main()
+                tune_lightgbm.main(output_dir)
 
             search.assert_called_once()
             self.assertIs(search.call_args.args[0], train)
@@ -100,7 +98,7 @@ class LightGBMSearchTest(unittest.TestCase):
         ]
         synthetic_hashes = {str(path): str(index) * 64 for index, path in enumerate(paths)}
         with patch(
-            "scripts.tune_lightgbm.file_sha256",
+            "experiments.tune_lightgbm.file_sha256",
             side_effect=lambda path: synthetic_hashes[str(path)],
         ) as hash_file:
             metadata = tune_lightgbm.build_metadata(configurations, output_dir)
@@ -218,7 +216,7 @@ class LightGBMSearchTest(unittest.TestCase):
         ]
 
         with patch(
-            "scripts.tune_lightgbm.evaluate_model_cv",
+            "experiments.tune_lightgbm.evaluate_model_cv",
             side_effect=[table.copy() for table in synthetic_scores],
         ) as evaluate:
             result = tune_lightgbm.run_search(train, configurations)

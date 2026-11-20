@@ -1,11 +1,11 @@
 """Run a bounded LightGBM search on patient-grouped training folds."""
 
+import argparse
 from functools import partial
 from itertools import product
 import platform
 
 from copy import deepcopy
-import hashlib
 from importlib.metadata import version
 import json
 import pandas as pd
@@ -13,7 +13,7 @@ from pathlib import Path
 
 from carepath_lab.features import FEATURE_SETS
 from carepath_lab.modeling import build_lightgbm_model, evaluate_model_cv
-from scripts.train_baseline import load_verified_partitions
+from carepath_lab.data import file_sha256, load_verified_partitions
 
 
 def run_search(
@@ -27,16 +27,16 @@ def run_search(
             build_lightgbm_model,
             **configuration,
         )
-        
+
         fold_results = evaluate_model_cv(
-            train, 
-            feature_set="extended", 
+            train,
+            feature_set="extended",
             model_builder=configured_builder,
         )
         fold_results["configuration_id"] = configuration_id
         for name, value in configuration.items():
             fold_results[name] = value
-        
+
         all_fold_results.append(fold_results)
 
     return pd.concat(all_fold_results, ignore_index=True)
@@ -75,10 +75,6 @@ def save_csv_results(
     results.to_csv(output_dir / "fold_results.csv", index=False, mode="x")
     summary.to_csv(output_dir / "summary.csv", index=False, mode="x")
 
-
-def file_sha256(path: Path) -> str:
-    with open(path, "rb") as file:
-        return hashlib.file_digest(file, "sha256").hexdigest()
 
 
 def build_metadata(
@@ -144,7 +140,7 @@ def save_metadata(metadata: dict, output_dir: Path) -> None:
 
 
 
-def main() -> None:
+def main(output_dir: Path) -> None:
     names = ["num_leaves", "min_child_samples", "reg_lambda"]
     combinations = list(product([15, 31], [20, 100], [0.0, 10.0]))
 
@@ -152,7 +148,6 @@ def main() -> None:
 
     print(f"Configurations: {len(configurations)}")
 
-    output_dir = Path("artifacts/lightgbm_tuning_2026-11-09_unscaled")
     if output_dir.exists():
         raise FileExistsError(f"Output directory already exists: {output_dir}")
 
@@ -168,4 +163,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output-dir", type=Path, required=True)
+    main(parser.parse_args().output_dir)

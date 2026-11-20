@@ -4,6 +4,7 @@ import io
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 import pandas as pd
@@ -177,6 +178,15 @@ class SplitCommandTest(unittest.TestCase):
         output = self.run_command()
         self.assertIn("Existing metadata", output)
         self.assertEqual(self.metadata_path.read_bytes(), before)
+
+    def test_environment_change_preserves_identical_assignments_and_creation_metadata(self):
+        self.run_command()
+        before = self.metadata_path.read_bytes()
+        assignments_before = self.output_path.read_bytes()
+        with patch("scripts.split_data.python_version", return_value="3.99.0"):
+            self.run_command()
+        self.assertEqual(self.metadata_path.read_bytes(), before)
+        self.assertEqual(self.output_path.read_bytes(), assignments_before)
 
     def test_different_metadata_is_rejected_without_overwriting(self):
         self.run_command()

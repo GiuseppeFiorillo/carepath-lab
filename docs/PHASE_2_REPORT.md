@@ -144,7 +144,7 @@ From the project root, with the source CSV, prepared environment and verified
 saved splits:
 
 ```bash
-.venv/bin/python -m scripts.evaluate_final_models \
+.venv/bin/python -m experiments.phase2_comparison \
   --output-dir artifacts/phase2_validation_repeat --bootstrap 1000
 ```
 

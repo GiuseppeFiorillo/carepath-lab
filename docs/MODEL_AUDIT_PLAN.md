@@ -8,8 +8,9 @@ fairness phase. This is a protocol/learning plan, not computed audit findings.
 Originally use the training-fitted specialty-mode CatBoost pipeline and saved
 predictions from artifacts/phase2_fixed_validation_2026-11-12. On 2026-11-20,
 the learner explicitly authorized a [bounded predictor review](FEATURE_REVIEW.md).
-The current 41-feature revision is saved in
-artifacts/feature_review_selected_final_2026-11-20; earlier audit results remain
+The current 41-feature workflow is scripts.train_model -> scripts.audit_model,
+using artifacts/current_model by default. The original revision snapshot remains
+in artifacts/feature_review_selected_final_2026-11-20; earlier audit results remain
 historical and must not be attributed to it. Audit the 19,883
 development-validation encounters, not the final test.
 This validation is already inspected development data, not external confirmation.
@@ -89,6 +90,11 @@ statistic. Replicates with absent groups/undefined recall remain NaN, and an
 interval is reported only if all differences are finite. This is a conservative
 reporting rule, not a remedy for inadequate subgroup support.
 
-No equivalence margin or TOST conclusion is claimed. Remaining work includes
-broader subgroup uncertainty, SHAP and the integrated Model Audit Report;
-this checkpoint does not complete Phase 3.
+These numerical recall results belong to the historical 45-feature model;
+they must not be attributed to the current 41-feature revision.
+
+No equivalence margin or TOST conclusion is claimed. Native SHAP checks,
+bar/beeswarm/waterfall exports and a three-sample descriptive sensitivity study
+are now documented in the [XAI checkpoint](MODEL_AUDIT_REPORT.md). Broader subgroup
+uncertainty and the final integrated Model Audit Report remain pending;
+these checkpoints do not complete Phase 3.

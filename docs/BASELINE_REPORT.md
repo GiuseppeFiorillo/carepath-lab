@@ -1,5 +1,10 @@
 # CarePath Lab — preliminary baseline comparisons
 
+Historical development log: command names below describe earlier Git revisions.
+For the current 41-feature workflow, use [README](../README.md). Optional
+reproduction studies now live in [experiments](../experiments/README.md); the
+superseded teaching commands remain available in Git history.
+
 Historical development record. The completed Phase 2 procedures, closing
 evaluation, figures and limits are in [PHASE_2_REPORT.md](PHASE_2_REPORT.md).
 
@@ -764,7 +769,7 @@ scikit-learn 1.9.1. The full 66-test suite passed for this snapshot, and the
 actual 1,000-replicate command reproduced the reported outputs. Data and split
 artifacts remain ignored by Git; no fitted model is persisted and clean-machine
 reconstruction has not been demonstrated. Implementation:
-[training command](../scripts/train_baseline.py),
+[training command](https://github.com/GiuseppeFiorillo/carepath-lab/blob/c3b8e95/scripts/train_baseline.py),
 [features/preprocessing](../carepath_lab/features.py),
 [model](../carepath_lab/modeling.py),
 [patient resampling](../carepath_lab/uncertainty.py).

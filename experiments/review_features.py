@@ -13,8 +13,7 @@ import pandas as pd
 
 from carepath_lab.features import FEATURE_SETS
 from carepath_lab.modeling import build_catboost_model, evaluate_model_cv
-from scripts.train_baseline import load_verified_partitions
-from scripts.tune_lightgbm import file_sha256
+from carepath_lab.data import file_sha256, load_verified_partitions
 
 
 CONSTANT_FEATURES = ["acetohexamide", "examide", "citoglipton"]
@@ -50,7 +49,7 @@ def main(output_dir: Path) -> None:
         Path("data/raw/diabetic_data.csv"),
         Path("data/processed/split_assignments.csv"),
         Path("data/processed/split_metadata.json"),
-        Path(__file__), Path("scripts/train_baseline.py"),
+        Path(__file__),
         *sorted(Path("carepath_lab").glob("*.py")),
     ]
     hashes = {str(path): file_sha256(path) for path in paths}

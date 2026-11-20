@@ -5,13 +5,13 @@ from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import patch
 
-from scripts.evaluate_final_models import main
+from experiments.phase2_comparison import main
 
 
 class FinalEvaluationGuardTest(unittest.TestCase):
     def test_existing_directory_is_refused_before_loading_data(self):
         with TemporaryDirectory() as directory:
-            with patch("scripts.evaluate_final_models.load_verified_partitions") as load:
+            with patch("experiments.phase2_comparison.load_verified_partitions") as load:
                 with self.assertRaises(FileExistsError):
                     main(Path(directory))
                 load.assert_not_called()
@@ -20,7 +20,7 @@ class FinalEvaluationGuardTest(unittest.TestCase):
     def test_invalid_bootstrap_count_is_rejected_without_creating_output(self):
         with TemporaryDirectory() as directory:
             destination = Path(directory) / "not_created"
-            with patch("scripts.evaluate_final_models.load_verified_partitions") as load:
+            with patch("experiments.phase2_comparison.load_verified_partitions") as load:
                 with self.assertRaises(ValueError):
                     main(destination, n_bootstrap=0)
                 load.assert_not_called()

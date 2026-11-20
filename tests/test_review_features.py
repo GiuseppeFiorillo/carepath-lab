@@ -4,7 +4,7 @@ import unittest
 import pandas as pd
 
 from carepath_lab.features import FEATURE_SETS
-from scripts.review_features import make_review_profiles
+from experiments.review_features import make_review_profiles
 
 
 class ReviewProfilesTest(unittest.TestCase):

@@ -16,13 +16,12 @@ from carepath_lab.audit import (
     summarize_subgroup_calibration,
     summarize_subgroup_metrics,
 )
-from scripts.train_baseline import load_verified_partitions
-from scripts.tune_lightgbm import file_sha256
+from carepath_lab.data import file_sha256, load_verified_partitions
 
 
 def main(
     output_dir: Path,
-    source_artifacts: Path = Path("artifacts/phase2_fixed_validation_2026-11-12"),
+    source_artifacts: Path = Path("artifacts/current_model"),
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=False)
     started_at = datetime.now(timezone.utc).isoformat()
@@ -33,7 +32,6 @@ def main(
         Path("data/processed/split_metadata.json"),
         source_artifacts / "validation_predictions.csv",
         source_artifacts / "metadata.json",
-        Path("scripts/train_baseline.py"),
         Path("scripts/audit_model.py"),
         *sorted(Path("carepath_lab").glob("*.py")),
     ]
@@ -161,7 +159,7 @@ if __name__ == "__main__":
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument(
         "--source-artifacts", type=Path,
-        default=Path("artifacts/phase2_fixed_validation_2026-11-12"),
+        default=Path("artifacts/current_model"),
     )
     args = parser.parse_args()
     main(args.output_dir, source_artifacts=args.source_artifacts)

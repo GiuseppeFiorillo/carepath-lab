@@ -127,7 +127,9 @@ training-fitted specialty mode imputation, no scaling or missingness indicator.
 Detailed profiles, full-precision fold scores, protocol, selection, hashes and
 environment are under ignored `artifacts/feature_review_2026-11-20/`.
 After this training-only decision, fit on all saved training and export a new
-pipeline/predictions under `artifacts/feature_review_selected_final_2026-11-20/`.
+pipeline/predictions in the reference snapshot `artifacts/feature_review_selected_final_2026-11-20/`.
+The canonical current command is now `scripts.train_model`, writing a new
+`artifacts/current_model` directory; `scripts.audit_model` reads it by default.
 The descriptive development-validation scores are AP 0.205039, AUROC 0.650958,
 Brier 0.096123; historical 45-field values were 0.205999/0.653226/0.096056.
 These development scores do not determine the feature decision and do not
@@ -142,7 +144,7 @@ The [selection record](reports/feature_review_selection.json) and
 [all 40 aggregate fold results](reports/feature_review_folds.csv) are versioned,
 so refitting the frozen reviewed model does not require reconstructing a local
 decision JSON. Refresh verifies the fold-file digest against that record.
-Current audit outputs are under
+Reference revision audit outputs are under
 `artifacts/feature_review_audit_final_2026-11-20/`; the source can be chosen
 explicitly with the audit command's `--source-artifacts` argument.
 The refreshed audit retains all 19,883 validation encounters/2,233 positives;

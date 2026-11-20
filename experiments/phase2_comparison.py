@@ -31,8 +31,7 @@ from carepath_lab.modeling import (
     build_random_forest_model, fit_and_predict_validation,
 )
 from carepath_lab.uncertainty import bootstrap_metric_scores
-from scripts.train_baseline import load_verified_partitions
-from scripts.tune_lightgbm import file_sha256
+from carepath_lab.data import file_sha256, load_verified_partitions
 
 
 def final_builders():
@@ -77,8 +76,8 @@ def main(output_dir: Path, n_bootstrap: int = 1000) -> None:
         "data/raw/diabetic_data.csv", "data/processed/split_assignments.csv",
         "data/processed/split_metadata.json", "carepath_lab/features.py",
         "carepath_lab/modeling.py", "carepath_lab/uncertainty.py",
-        "carepath_lab/splitting.py", "scripts/train_baseline.py",
-        "scripts/evaluate_final_models.py",
+        "carepath_lab/splitting.py", "carepath_lab/data.py",
+        "experiments/phase2_comparison.py",
     ]]
     before = {str(path): file_sha256(path) for path in inputs}
     train, validation = load_verified_partitions()

@@ -110,3 +110,7 @@ L'incertezza per gli altri confronti, SHAP e il report integrato restano da comp
 - Scaricare/caricare un campione del CSV in `data/raw/` non tracciato da Git.
 - Stampare shape, tipi, prime righe e distribuzione `readmitted`.
 - Fermarsi, interpretare le prime osservazioni e decidere il task successivo.
+
+Il percorso corrente e i comandi supportati sono nel README: `scripts.train_model`
+e `scripts.audit_model`. Confronti e tuning facoltativi vivono in `experiments/`;
+i report storici conservano i risultati delle rispettive versioni del modello.

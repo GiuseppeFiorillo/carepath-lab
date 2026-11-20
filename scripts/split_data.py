@@ -154,12 +154,21 @@ def main() -> None:
         with metadata_path.open("r", encoding="utf-8") as file:
             metadata_from_file = json.load(file)
 
-        if metadata != metadata_from_file:
+        expected_protocol = {key: value for key, value in metadata.items() if key != "environment"}
+        saved_protocol = {key: value for key, value in metadata_from_file.items() if key != "environment"}
+        saved_environment = metadata_from_file.get("environment")
+        if (
+            expected_protocol != saved_protocol
+            or not isinstance(saved_environment, dict)
+            or saved_environment.keys() != metadata["environment"].keys()
+        ):
             raise ValueError("Existing metadata differ from newly computed ones.")
 
+        # Assignments were compared above; retain the original creation provenance.
+        if saved_environment != metadata["environment"]:
+            print("Environment differs; preserving the original split creation metadata.")
         print(f"Existing metadata at {metadata_path} match; reusing them.")
 
-    3
 
 if __name__ == "__main__":
     main()

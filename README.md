@@ -1,296 +1,181 @@
 # CarePath Lab
 
-An educational healthcare data science project studying recorded hospital
+An educational healthcare ML project studying recorded 30-day hospital
 readmission in the historical UCI diabetes dataset. Built incrementally to learn
-rigorous ML, SQL and software engineering. It is not a clinical tool.
+rigorous ML, SQL, software engineering, explainability and subgroup assessment.
+**Not a clinical tool.**
 
-## Status and scope
+## Current model and scope
 
-Phases 0–2 are complete. The [Phase 2 report](docs/PHASE_2_REPORT.md) is the current
-modeling reference. The [development history](docs/BASELINE_REPORT.md) preserves the six-feature
-logistic/dummy reference and records the subsequent 45-feature logistic,
-Random Forest and LightGBM grouped-CV and saved-validation comparisons, plus
-CatBoost native-category and controlled imputation experiments. Tree-model
-numerical scaling has been removed; earlier scaled results remain labeled as
-historical snapshots. The bounded model/imputation search is finished for Phase 2:
-CatBoost with training-fitted medical_specialty mode imputation and no missingness
-indicator is the AP-selected candidate, not a proven superior or clinical model.
-The final test set has not been scored. The selected training-fitted CatBoost
-pipeline, probabilities and execution metadata are saved locally under ignored
-artifacts/. Aggregate validation metrics, paired bootstrap intervals and PR/
-calibration figures are exported in the report. The validation has already been
-inspected and is not an untouched confirmatory sample. Phase 3 is in progress:
-subgroup metrics, calibration and a first patient-cluster comparison are implemented;
-SHAP and the full Model Audit Report remain pending. See the
-[Model Audit Plan](docs/MODEL_AUDIT_PLAN.md). The final test remains reserved.
-An explicitly authorized [predictor review](docs/FEATURE_REVIEW.md) now defines
-the current `reviewed` model with 41 predictors: payer and three training-constant
-drug fields are excluded. The 45-field `extended` configuration and Phase 2
-artifacts remain historical references, not overwritten results.
-See the [phase checklist](ROADMAP.md) for completion criteria.
+The current model is **CatBoost with 41 predictors**, named `reviewed` in code.
+It uses native categorical handling and training-fitted mode imputation for
+`medical_specialty`. Payer and three training-constant medication fields are
+excluded. See the [feature review](docs/FEATURE_REVIEW.md) for evidence and
+tradeoffs; the revision does not claim improved performance or fairness.
 
-| Dataset / analysis population | Encounters | Patients / outcomes |
-| --- | ---: | --- |
-| Original source and raw table | 101,766 | 71,518 patients; 50 columns |
-| Initial analysis cohort | 100,114 | 11,357 positives; 88,757 negatives; 11.34% positives |
+Phases 0–2 are complete; Phase 3 is in progress. Subgroup metrics, fixed-bin
+calibration, a patient-cluster recall comparison and numerical SHAP checks are
+implemented, along with global/local SHAP plots and an
+[XAI audit checkpoint](docs/MODEL_AUDIT_REPORT.md). Broader subgroup uncertainty
+and the final integrated Model Audit Report remain pending.
+The final test set has not been scored. Development validation has already been
+inspected repeatedly; it is not external confirmation.
 
-The recorded target is `<30` versus `>30`/`NO`. The initial cohort excludes
-`discharge_disposition_id` codes `11`, `19`, `20`, `21`, while preserving repeated
-patients and the complete original data. Identifiers are metadata/grouping keys,
-never predictive features. See [cohort policy](docs/COHORT_POLICY.md) for exact
-rules and limitations. These counts are descriptive, not model metrics.
-
-## Repository layout
+## Layout
 
 ```text
-carepath_lab/       Shared validation, data preparation, modeling and resampling
-scripts/           Data, split and baseline commands
-sql/               Two full-source schema files
-tests/            Synthetic unit/orchestration tests
-docs/             Audit, dictionary, decisions and current progress
-examples/phase_1/   Optional earlier Python/SQL learning exercises
+carepath_lab/   Shared data validation, features, modeling, audit and SHAP logic
+scripts/        Current data preparation, training and audit commands
+experiments/    Optional comparison, tuning and ablation studies
+sql/            Full-source PostgreSQL schema
+examples/       Earlier Python/SQL learning exercises
+tests/          Synthetic unit and command tests
+docs/           Dataset policies, decisions, evidence and reports
 ```
 
-`carepath_lab` is a small importable package; `scripts` contains commands that
-use it. Run commands with `python -m ...` from the project root. No editable
-package installation or additional framework is required at this stage.
+Run commands from the project root with `python -m ...`. No editable package
+installation is required. Shared code lives in `carepath_lab`; commands do not
+import utilities from other command modules.
 
-## Local setup
+## Local setup and source
 
-Tested on macOS 26.5.2 arm64 with Python 3.13.5, pandas 3.1.0 and Psycopg 3.3.6.
-Scikit-learn 1.9.1 is installed for Phase 2; its dependency checks and a synthetic
-grouped-split smoke check passed without changing existing NumPy/pandas/Psycopg
-versions. The project targets Python 3.11+. PostgreSQL 18.6 was installed separately through
-Homebrew. The current environment is tested; a fresh-machine reconstruction has
-not been verified. Direct dependency pins are not a complete transitive lock.
-
-LightGBM 4.7.0 is pinned for the Phase 2 boosting comparison. On macOS it also
-requires the external OpenMP runtime (`libomp`); if absent, install it through
-Homebrew with `brew install libomp` before verifying the Python import.
-The current machine already had libomp, so no system package was changed.
-The ARM64 wheel, sparse synthetic fit/prediction and `pip check` passed locally.
-
-CatBoost 1.2.10 is also pinned. Its native-category procedure receives named
-categorical columns without external one-hot encoding or numerical scaling;
-optional imputation is fitted separately inside each patient-grouped fold.
-
-For a new Python environment only:
+Python 3.12+ (required by the pinned SHAP version); current checks ran on Apple
+Silicon with Python 3.13.18. For a new
+environment only:
 
 ```bash
 python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 ```
 
-Skip creation/installation if your environment is already prepared. Examples
-below use `.venv/bin/python` explicitly, so activation is optional. Git,
-PostgreSQL and `psql` are external prerequisites, not Python packages.
+On macOS, LightGBM requires Homebrew `libomp` (`brew install libomp` if absent).
+Dependencies are pinned directly; a full transitive lock and clean-machine
+reconstruction are not claimed. CatBoost supplies native SHAP computation;
+the separate `shap` package supplies beeswarm and waterfall visualization.
 
-## Source data
+Download the original [UCI Diabetes 130-US Hospitals, 1999–2008](https://doi.org/10.24432/C5230J)
+files to `data/raw/diabetic_data.csv` and `data/raw/IDS_mapping.csv`.
+Dataset attribution: Clore, Cios, DeShazo and Strack (2014), CC BY 4.0.
 
-Download the original files from [UCI Diabetes 130-US Hospitals for Years
-1999–2008](https://doi.org/10.24432/C5230J) into:
-
-```text
-data/raw/diabetic_data.csv
-data/raw/IDS_mapping.csv
-```
-
-Dataset: Clore, Cios, DeShazo and Strack (2014), CC BY 4.0. Raw/processed data,
-secrets, virtual environments and trained artifacts are excluded by `.gitignore`.
-The source files remain unchanged; downloads are not automated.
-
-| File | Recorded SHA-256 |
+| Source file | Recorded SHA-256 |
 | --- | --- |
 | `diabetic_data.csv` | `0689e7ec031237dc63031b938805c48377748761a3b26acab621567afa24df97` |
 | `IDS_mapping.csv` | `f1bb82b471cb34649352597572c9b1fb00bd27f77b9f5a22a03dc3eb1039749e` |
 
-These identify the local files; they do not independently establish authenticity
-or clinical accuracy. Current contents have not been compared against a fresh
-official download.
+The complete source has 101,766 encounters/71,518 patients. The analysis cohort
+has 100,114 encounters after excluding discharge death codes 11/19/20/21.
+Sources are preserved. `readmitted == "<30"` maps to 1; `">30"` and `"NO"` map to 0.
+IDs are integrity/grouping keys, never predictors. See [cohort policy](docs/COHORT_POLICY.md).
+Data, models, local artifacts, secrets and mentoring notes are excluded from Git.
 
-## Full-source PostgreSQL import
+## Current workflow
 
-On the tested Apple Silicon Homebrew setup, if needed:
-
-```bash
-export PATH="/opt/homebrew/opt/postgresql@18/bin:$PATH"
-brew services run postgresql@18
-```
-
-The scripts use `localhost:5432`, database `carepath_lab`, and the default local
-PostgreSQL role. Role/password provisioning is not automated. For a new database
-and new raw table, execute once:
-
-```bash
-psql -h localhost -p 5432 -d postgres -c "CREATE DATABASE carepath_lab;"
-psql -h localhost -p 5432 -d carepath_lab -v ON_ERROR_STOP=1 -f sql/001_create_encounters_raw.sql
-psql -h localhost -p 5432 -d carepath_lab -v ON_ERROR_STOP=1 -f sql/002_add_encounters_raw_checks.sql
-.venv/bin/python -m scripts.load_raw_data
-```
-
-**Existing populated database:** skip creation, schema files and loading. The
-renamed schema files are the same definitions previously named `009`/`010`, not
-new migrations to apply again. No existing table was dropped or changed during
-repository cleanup.
-
-The loader validates column names/order and records, preserves all 50 parsed
-source fields as `TEXT`, and uses parameterized inserts in one transaction. The
-primary key, non-null fields and minimal CHECK constraints guard identifiers
-and target categories. A propagated error aborts the transaction; success is
-printed after commit. A populated destination is rejected, without automatic
-replacement or deletion. Run one loader at a time: the emptiness check is not a
-concurrency lock. Analysis cohort filtering is separate from raw ingestion.
-
-## Data audit and import commands
-
-| Command module | Purpose | PostgreSQL required? |
-| --- | --- | --- |
-| `scripts.load_raw_data` | Load a validated source into an empty raw table | Yes; writes only during an intentional import |
-| `scripts.verify_raw_import` | Compare source/header and every stored field by encounter ID | Yes; reads only |
-| `scripts.profile_data` | Audit markers, numeric values, categories, duplicates and cohort counts | No |
-| `scripts.audit_administrative_mappings` | Audit mapping coverage and unavailable-information codes | No |
-
-With source CSVs available, run audits and verification:
-
-```bash
-.venv/bin/python -m scripts.profile_data
-.venv/bin/python -m scripts.audit_administrative_mappings
-.venv/bin/python -m scripts.verify_raw_import
-```
-
-The profiler regenerates the aggregate
-`docs/reports/missing_marker_profile.csv`; original sources are preserved. Exact
-import verification must report 101,766 database records and zero missing,
-unexpected or mismatched records. This establishes import fidelity, not source
-quality, complete follow-up or clinical usefulness.
-
-## Phase 3: audit saved validation predictions
-
-For the current reviewed model, after saved splits are available locally:
-
-```bash
-.venv/bin/python -m scripts.review_features --output-dir artifacts/feature_review_repeat
-.venv/bin/python -m scripts.refresh_selected_model --output-dir artifacts/reviewed_model_repeat
-.venv/bin/python -m scripts.audit_model --source-artifacts artifacts/reviewed_model_repeat --output-dir artifacts/reviewed_audit_repeat
-```
-
-The first command optionally repeats the eight-profile training-only sensitivity
-study (40 fits); it does not automatically select or delete predictors and is
-not a prerequisite to refresh the frozen model. The refresh command uses the
-documented `reviewed` schema and versioned decision/fold evidence under
-`docs/reports/feature_review_selection.json` and `feature_review_folds.csv`.
-Current verified artifacts are `artifacts/feature_review_selected_final_2026-11-20/`
-and `artifacts/feature_review_audit_final_2026-11-20/`. No final-test scoring is performed.
-Use `feature_set="reviewed"` when constructing inputs for the new pipeline and
-SHAP; the earlier 45-field SHAP exercises explain the historical model only.
-
-For the original Phase 2 model, the unchanged default source remains available:
-
-```bash
-.venv/bin/python -m scripts.audit_model --output-dir artifacts/phase3_audit_run
-```
-
-Choose a new output directory for each execution; existing directories are
-refused before data loading. This command reuses the saved specialty-mode
-CatBoost probabilities without fitting models or scoring the reserved test.
-It exports subgroup support/confusion metrics at thresholds 0.10/0.20/0.30/0.50,
-fixed-bin calibration for recorded gender/age/race, and a 1,000-replicate
-patient-cluster percentile interval for recall Female minus Male at 0.20.
-Undefined metrics remain missing. If any bootstrap difference is not finite,
-the interval and its summary CSV are omitted, while metadata records that fact.
-
-Outputs are `subgroup_metrics.csv`, `subgroup_calibration.csv`, optional
-`bootstrap_recall_summary.csv`, and `metadata.json` with settings, versions and
-input/code/output hashes. They remain under ignored `artifacts/`. The saved
-Phase 2 metadata records the original fitted-model environment; audit metadata
-records this analysis environment. Matching seeds require the same patient
-order for identical finite bootstrap draws.
-
-These are exploratory results on repeatedly inspected development validation,
-conditional on the fitted model. Small groups and repeated patients limit
-interpretation; the interval neither establishes equivalence nor simultaneous
-coverage of all comparisons. SHAP and a full fairness assessment are not yet
-included. See the [Model Audit Plan](docs/MODEL_AUDIT_PLAN.md).
-
-## Tests and learning examples
-
-```bash
-.venv/bin/python -m unittest discover -s tests -v
-```
-
-The tests use synthetic data and mocked database connections; original source
-CSVs and a running database are not required for that suite. Live PostgreSQL
-verification is a separate acceptance check. Neither the unit suite nor the live
-comparison is an exhaustive clinical validation or a full automated loader
-rollback integration suite.
-
-Earlier CSV loops, five-column staging, JOIN/CTE/HAVING queries and the temporary
-table rollback demonstration are preserved in
-[examples/phase_1](examples/phase_1/README.md). They are optional learning artifacts,
-not prerequisites for the current pipeline. The duplicate assistant-written
-inspector and redundant empty-staging checker were removed; useful header checks
-were consolidated in the shared validator and tests.
-
-## Frozen Phase 2 model comparison
-
-With the original source and verified saved split artifacts from
-`scripts.split_data` available, run the commands below. On a new checkout with
-the downloaded CSV, first create the saved splits; matching existing artifacts
-are reused, incompatible ones are refused. PostgreSQL is not required for this
-modeling path.
+PostgreSQL is not required for this ML path. With source files available:
 
 ```bash
 .venv/bin/python -m scripts.split_data
-.venv/bin/python -m scripts.evaluate_final_models \
-  --output-dir artifacts/phase2_validation_repeat --bootstrap 1000
+.venv/bin/python -m scripts.train_model --output-dir artifacts/current_model
+.venv/bin/python -m scripts.audit_model --output-dir artifacts/current_audit
 ```
 
-Choose a new output directory: existing destinations are refused. This fits the
-four frozen pipelines and prior dummy on saved training, then exports development
-validation metrics/calibration, 1,000 paired patient-bootstrap replicates per
-metric, figures, prediction artifacts and the selected fitted pipeline. It does
-not score the final test or select a new winner from validation. Raw source
-predictor count is 45; the selected pipeline imputes only medical_specialty.
-Matplotlib/joblib are pinned for report figures and local model persistence.
+The split command creates or verifies saved patient-disjoint assignments.
+If assignments and protocol match under a newer environment, it preserves the
+original split creation metadata instead of overwriting it.
+Train/validation/test contain 60,276/19,883/19,955 encounters, respectively.
+All encounters of one patient stay in a single partition.
 
-`scripts.train_baseline` and `scripts.evaluate_models` preserve the initial
-teaching comparisons. `scripts.tune_lightgbm` reproduces the eight-setting search;
-its output destination is currently set in main and must be new. These commands
-are documented history, not prerequisites to rerun the frozen comparison.
+`train_model` fits only saved training and exports the fitted pipeline,
+validation probabilities and metadata. It checks the reviewed schema/selection
+record, reload prediction equality, SHAP shape/order/finiteness/additivity and
+probability reconstruction on five examples, and input/code hashes.
+It is a training command, not just a test or artifact checker.
 
-## Scientific limits and next step
+`audit_model` reads `artifacts/current_model` by default, validates encounter,
+patient and outcome alignment, then exports:
 
-Historical 1999–2008 observations do not establish present-day clinical utility
-or causal effects. `NO` means no recorded readmission, not verified complete
-follow-up. Field-level availability at discharge is assumed or uncertain; the
-current 45-feature comparison uses the declared assumptions/exclusions. Missing markers, nonmeasurement and
-unavailable codes have field-specific meanings and are not automatically
-interchangeable. No diagnoses, treatment advice or patient triage are provided.
+- `subgroup_metrics.csv`: support, confusion counts, recall/precision/FPR for
+  recorded gender/age/race at thresholds .10/.20/.30/.50;
+- `subgroup_calibration.csv`: fixed-bin predicted versus observed means;
+- `bootstrap_recall_summary.csv`: Female-minus-Male recall at .20, with a
+  1,000-replicate patient-cluster percentile interval, only if all draws are finite;
+- `metadata.json`: settings, versions and input/code/output hashes.
 
-The closing selected CatBoost validation AP is 0.205999 (conditional patient-
-bootstrap 95% interval 0.188982–0.227624), at prevalence 0.112307. AP differences
-versus RF/LightGBM remain unresolved by paired intervals. These are development
-results from the same source, not independent external or prospective validation.
+Undefined metrics stay missing, not zero. These thresholds are exploratory,
+not clinical operating points. Bootstrap conditions on the fitted model and
+provides no simultaneous coverage of all comparisons.
 
-## License and publication
+Output directories must be new; no automatic replacement/deletion. For a repeat,
+choose new destinations and pass the model directory explicitly to the audit:
 
-Code is under the [MIT license](LICENSE), selected by the project author.
-The public dataset retains CC BY 4.0 and its attribution above. Data, fitted
-models, secrets and local personal notes are ignored. The repository has been
-prepared for review; no commit, push or publication was performed by the assistant.
-The final test remains reserved until model/analysis choices are fixed.
+```bash
+.venv/bin/python -m scripts.train_model --output-dir artifacts/run_02_model
+.venv/bin/python -m scripts.audit_model --source-artifacts artifacts/run_02_model --output-dir artifacts/run_02_audit
+```
 
-## Project documentation
+For Python use, load partitions/hash files from `carepath_lab.data`, construct
+inputs with `build_model_inputs(..., feature_set="reviewed")`, and call
+`carepath_lab.explainability.compute_native_shap` with the fitted pipeline.
+The helper returns transformed inputs and native SHAP contributions plus their
+reference, in raw log-odds. It does not fit, sample, export or plot.
 
-- [Data audit](docs/DATA_AUDIT.md): observed findings and verification evidence.
-- [Data dictionary](docs/DATA_DICTIONARY.md): meanings, availability assumptions and literature notes.
-- [Cohort policy](docs/COHORT_POLICY.md): initial cohort, target and preprocessing contract.
-- [Phase 2 report](docs/PHASE_2_REPORT.md): current comparison, uncertainty and limitations.
-- [Development history](docs/BASELINE_REPORT.md): earlier baseline experiments.
-- [Decisions](docs/DECISIONS.md): scientific and engineering choices.
-- [Project brief](PROJECT_BRIEF.md) and [roadmap](ROADMAP.md): scope and learning phases.
+To export explanations for the model in `artifacts/current_model`:
 
-Personal mentoring prompts, session histories and local progress notes are not
-part of the published repository. `AGENTS.md` documents collaboration and
-scientific guardrails; it is intentionally versionable. The code license is MIT
-(see LICENSE); no public repository, commit, remote or release was created here.
+```bash
+MPLBACKEND=Agg .venv/bin/python -m scripts.explain_model --output-dir artifacts/explanations
+```
+
+The command samples 1,000 validation encounters with seed42 and saves `sample.csv`
+(IDs/order), `transformed_inputs.csv`, `shap_values.npz` (41 contributions,
+separate reference values and feature names), `global_importance.png`,
+`beeswarm.png`, `waterfall.png` and `metadata.json`. It verifies
+the model fingerprint and source/split agreement with its training metadata,
+then records file/code hashes, versions, sampling and interpretation limits.
+NPZ arrays can be loaded with `allow_pickle=False`; CSV categorical labels must
+be read without automatically treating literal `None` as a missing value.
+All files remain in ignored artifacts; identifiers are not published.
+Explanations are encounter-weighted and noncausal. The waterfall uses the first
+sampled encounter; its position is recorded in metadata. The
+[XAI report](docs/MODEL_AUDIT_REPORT.md) documents interpretation and descriptive
+sensitivity across three samples.
+
+## Optional data engineering and experiments
+
+The [data audit](docs/DATA_AUDIT.md) and [data dictionary](docs/DATA_DICTIONARY.md)
+document source checks. `scripts.profile_data` and
+`scripts.audit_administrative_mappings` run without a database.
+
+For PostgreSQL 18, create the local `carepath_lab` database and apply
+`sql/001_create_encounters_raw.sql` and `sql/002_add_encounters_raw_checks.sql`
+with `psql -v ON_ERROR_STOP=1 -f PATH`. Then run `scripts.load_raw_data` and
+`scripts.verify_raw_import`. These use localhost:5432 and the local PostgreSQL
+role; credentials/role provisioning are not automated. Loading requires an empty
+table, preserves all 50 parsed fields, and commits one transaction. The live
+verification is separate from the synthetic test suite.
+
+Optional model studies are documented in [experiments/README.md](experiments/README.md).
+They are not prerequisites for training the fixed current model. The historical
+45-field `extended` and six-field `initial` schemas remain for those references;
+[Phase 2 results](docs/PHASE_2_REPORT.md) are not relabeled as current-model results.
+Earlier exercises remain under [examples/phase_1](examples/phase_1/README.md).
+Superseded teaching commands are available in Git history rather than maintained
+as additional entry points.
+
+## Tests and interpretation limits
+
+```bash
+.venv/bin/python -m unittest discover -s tests -v
+.venv/bin/python -m pip check
+```
+
+Tests use synthetic data; they do not require source CSVs, a live database or
+real-model retraining. Command integration is checked separately on local data.
+
+Historical selection, incomplete outcome capture, missingness and unverified
+field timestamps limit interpretation. `NO` means no recorded readmission,
+not complete follow-up. SHAP describes model behavior, not causal effects.
+Neither a small subgroup gap nor a confidence interval containing zero proves
+fairness or equivalence. No diagnostic, treatment or deployment claim is made.
+
+See the [roadmap](ROADMAP.md), [Model Audit Plan](docs/MODEL_AUDIT_PLAN.md),
+[decisions](docs/DECISIONS.md) and [historical development report](docs/BASELINE_REPORT.md).
+Code is licensed under [MIT](LICENSE); the dataset retains its separate license.

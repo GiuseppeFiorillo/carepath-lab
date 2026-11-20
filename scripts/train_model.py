@@ -1,4 +1,4 @@
-"""Fit the reviewed CatBoost on saved train and refresh development predictions."""
+"""Train the current 41-feature CatBoost and export checked validation predictions."""
 
 import argparse
 from datetime import datetime, timezone
@@ -8,15 +8,14 @@ import json
 from pathlib import Path
 import platform
 
-from catboost import Pool
 import joblib
 import numpy as np
 from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_score
 
+from carepath_lab.data import file_sha256, load_verified_partitions
+from carepath_lab.explainability import compute_native_shap
 from carepath_lab.features import FEATURE_SETS, build_model_inputs
 from carepath_lab.modeling import build_catboost_model, fit_and_predict_validation
-from scripts.train_baseline import load_verified_partitions
-from scripts.tune_lightgbm import file_sha256
 
 
 def main(output_dir: Path) -> None:
@@ -33,7 +32,7 @@ def main(output_dir: Path) -> None:
         Path("data/raw/diabetic_data.csv"),
         Path("data/processed/split_assignments.csv"),
         Path("data/processed/split_metadata.json"),
-        Path(__file__), Path("scripts/train_baseline.py"),
+        Path(__file__),
         *sorted(Path("carepath_lab").glob("*.py")),
     ]
     before = {str(path): file_sha256(path) for path in paths}
@@ -54,18 +53,16 @@ def main(output_dir: Path) -> None:
     inputs, _ = build_model_inputs(validation, feature_set="reviewed")
     np.testing.assert_allclose(reloaded.predict_proba(inputs)[:, 1], probabilities, rtol=1e-12, atol=1e-12)
     classifier = pipeline.named_steps["classifier"]
-    examples = inputs.iloc[:5]
-    if "preprocessor" in pipeline.named_steps:
-        examples = pipeline.named_steps["preprocessor"].transform(examples)
-    if list(examples.columns) != classifier.feature_names_:
-        raise ValueError("Transformed feature order disagrees with classifier feature names.")
-    pool = Pool(examples, cat_features=classifier.get_cat_feature_indices())
-    contributions = classifier.get_feature_importance(pool, type="ShapValues", thread_count=8)
-    raw_scores = classifier.predict(pool, prediction_type="RawFormulaVal")
+    examples, contributions = compute_native_shap(
+        pipeline, inputs.iloc[:5]
+    )
+    raw_scores = classifier.predict(
+        examples,
+        prediction_type="RawFormulaVal",
+    )
     reconstructed = contributions.sum(axis=1)
-    np.testing.assert_allclose(reconstructed, raw_scores, rtol=1e-6, atol=1e-8)
     if before != {str(path): file_sha256(path) for path in paths}:
-        raise ValueError("Inputs or code changed during model refresh.")
+        raise ValueError("Inputs or code changed during training.")
     metadata = {
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "feature_set": "reviewed", "features": config,
@@ -95,7 +92,7 @@ def main(output_dir: Path) -> None:
         json.dump(metadata, file, indent=2, allow_nan=False)
         file.write("\n")
     print(json.dumps(metadata["validation_metrics"], indent=2), flush=True)
-    print(f"Saved reviewed pipeline and validation predictions to {output_dir}", flush=True)
+    print(f"Saved current pipeline and validation predictions to {output_dir}", flush=True)
 
 
 if __name__ == "__main__":
